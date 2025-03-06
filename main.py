@@ -45,12 +45,14 @@ RATE_LIMIT_TIMEOUT: int = 600        # How many seconds to sleep for when hittin
 ### END CONFIG
 
 # Ensure files exist
+print("[*] Checking files...")
 open('token.txt', 'a').close()
 open('inactive_channels.txt', 'a').close()
 open(CACHING_FILE, 'a').close()
 open(TARGETED_CHANNEL_FILE, 'a').close()
 
 # Get static data and object references
+print("[*] Setting up objects...")
 with open("token.txt", "r") as file:
     TOKEN = file.read()
 with open(TARGETED_CHANNEL_FILE, "r") as file:
@@ -61,6 +63,7 @@ API = dcAPI(TOKEN, silent=E_SILENT, fragile=FRAGILE, rate_limit_timeout=RATE_LIM
 DATABASE = sqlite3.connect(DATABASE_NAME)
 
 # Ensure tables exist
+print("[*] Preparing database...")
 DATABASE.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, channel_id INTEGER, author_id INTEGER, content TEXT, timestamp TEXT)")
 
 # Misc setup
@@ -76,31 +79,34 @@ if not CHANNEL_CULLING_ENABLE:
 
 sleep(1) # Discord rate limits the program if you start too fast...? (dunno but this about fixes it)
 
+### Channel gathering
+channels: list[Channel] = []
+print("[*] Gathering channels...")
+if not TARGETED_ENABLE:
+    guilds = API.get_user_guilds()
+    for guild in guilds:
+        temp = API.get_guild_channels(guild)
+        channels += temp
+if TARGETED_ENABLE:
+    counter = -1
+    for channel_id in TARGETED_CHANNELS:
+        counter += 1
+        channels.append(Channel(int(channel_id), f"TARGETED_CHANNEL_{counter}"))
+if CHANNEL_CULLING_ENABLE and CHANNEL_CULLING_CACHE:
+    counter = 0
+    for channel in channels:
+        if channel.id in INACTIVE_CHANNELS:
+            counter += 1
+            channels.remove(channel)
+    print("[?] Removed " + str(counter) + " inactive channels from list!")
+
+print("[*] Setup complete!\n")
+
 ### Looping
 start_time = time()
 loop_number = 0
 while True:
     loop_number += 1
-
-    ### Channel gathering
-    channels: list[Channel] = []
-    if not TARGETED_ENABLE:
-        guilds = API.get_user_guilds()
-        for guild in guilds:
-            temp = API.get_guild_channels(guild)
-            channels += temp
-    if TARGETED_ENABLE:
-        counter = -1
-        for channel_id in TARGETED_CHANNELS:
-            counter += 1
-            channels.append(Channel(int(channel_id), f"TARGETED_CHANNEL_{counter}"))
-    if CHANNEL_CULLING_ENABLE and CHANNEL_CULLING_CACHE:
-        counter = 0
-        for channel in channels:
-            if channel.id in INACTIVE_CHANNELS:
-                counter += 1
-                channels.remove(channel)
-        print("[?] Removed " + str(counter) + " inactive channels from list!")
 
     ### Modules here
     if CACHING_ENABLE and not TARGETED_ENABLE:
@@ -140,7 +146,7 @@ while True:
             stored_messages_count = DATABASE.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
             API.send_message(Channel(NOTIFS_CHANNEL, "None"), f"DATA GATHER UPDATE\n\nBeen running for {int((time() - start_time) / 60)} minutes\nLoop number: {loop_number}\nTotal stored messages: {stored_messages_count}")
 
-    ### Break looping if not enabled
+    ### Break looping if not enabled or if looping times has been reached
     if not LOOPING_ENABLE:
         break
     if not S_SILENT:
