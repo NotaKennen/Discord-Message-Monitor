@@ -86,7 +86,7 @@ if not TARGETED_ENABLE:
     guilds = API.get_user_guilds()
     for guild in guilds:
         temp = API.get_guild_channels(guild)
-        channels += temp
+        channels.extend(temp)
 if TARGETED_ENABLE:
     counter = -1
     for channel_id in TARGETED_CHANNELS:
@@ -94,10 +94,13 @@ if TARGETED_ENABLE:
         channels.append(Channel(int(channel_id), f"TARGETED_CHANNEL_{counter}"))
 if CHANNEL_CULLING_ENABLE and CHANNEL_CULLING_CACHE:
     counter = 0
+    updated_channels: list[Channel] = []
     for channel in channels:
-        if channel.id in INACTIVE_CHANNELS:
+        if str(channel.id) in INACTIVE_CHANNELS:
             counter += 1
-            channels.remove(channel)
+        else:
+            updated_channels.append(channel)
+    channels = updated_channels
     print("[?] Removed " + str(counter) + " inactive channels from list!")
 
 print("[*] " + str(len(channels)) + " channels gathered!")

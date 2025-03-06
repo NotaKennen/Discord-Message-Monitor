@@ -21,14 +21,17 @@ def message_gather(API: dcAPI, DATABASE: Connection, channels: list[Channel], si
         if channel_culling != 0 and messages != []:
             # Timestamps are in format: YYYY-MM-DDTHH:MM:SS.000000+00:00
             # We can use the T as a separator for date and time (and discard milliseconds)
-            time_obj = datetime.strptime(messages[0].timestamp, "%Y-%m-%dT%H:%M:%S.%f%z")
-            time_now = datetime.now(utc)
-            time_since = int((time_now - time_obj).total_seconds())
-            if time_since < channel_culling: # All the non-culled channels go to updated_channels
-                updated_channels.append(Channel(channel.id, channel.name))
-            else:
-                if not silent:
-                    print("[*] Channel '" + channel.name + "' has been culled (last message was " + str(time_since) + " seconds ago)")
+            try:
+                time_obj = datetime.strptime(messages[0].timestamp, "%Y-%m-%dT%H:%M:%S.%f%z")
+                time_now = datetime.now(utc)
+                time_since = int((time_now - time_obj).total_seconds())
+                if time_since < channel_culling: # All the non-culled channels go to updated_channels
+                    updated_channels.append(Channel(channel.id, channel.name))
+                else:
+                    if not silent:
+                        print("[*] Channel '" + channel.name + "' has been culled (last message was " + str(time_since) + " seconds ago)")
+            except ValueError: # FIXME: time_obj sometimes throws ValueError, I don't know why, fix later, something to do with missing milliseconds I think
+                pass
         elif channel_culling != 0: # Channel either has no messages or HTTP403'd (is private)
             if not silent:
                     print("[*] Channel '" + channel.name + "' has been culled (channel is private or empty)")
