@@ -34,6 +34,11 @@ NOTIFS_ENABLE: bool = False          # Whether or not discord updates should be 
 NOTIFS_CHANNEL: int = 0              # Channel ID to send updates to
 NOTIFS_FREQUENCY: int = 0            # How often to send updates (loop amount)
 
+# Channel culling                      (Removes channels from the observed list that haven't had messages in a while)
+CHANNEL_CULLING_ENABLE: bool = True  # Whether or not channel culling should be enabled
+CHANNEL_CULLING_RANGE: int = 3600    # How old should the latest message in the channel be before it's considered dead (seconds)
+CHANNEL_CULLING_CACHE: bool = True   # Will remember what channels are inactive and avoid them after restarts
+
 # Misc                                 (Misc settings)
 RATE_LIMIT_TIMEOUT: int = 600        # How many seconds to sleep for when hitting the rate-limit (0 for no sleeping, although that might get you stuck in a loop)
 
@@ -41,6 +46,7 @@ RATE_LIMIT_TIMEOUT: int = 600        # How many seconds to sleep for when hittin
 
 # Ensure files exist
 open('token.txt', 'a').close()
+open('inactive_channels.txt', 'a').close()
 open(CACHING_FILE, 'a').close()
 open(TARGETED_CHANNEL_FILE, 'a').close()
 
@@ -49,18 +55,23 @@ with open("token.txt", "r") as file:
     TOKEN = file.read()
 with open(TARGETED_CHANNEL_FILE, "r") as file:
     TARGETED_CHANNELS = file.read().splitlines()
+with open("inactive_channels.txt", "r") as file:
+    INACTIVE_CHANNELS = file.read().splitlines()
 API = dcAPI(TOKEN, silent=E_SILENT, fragile=FRAGILE, rate_limit_timeout=RATE_LIMIT_TIMEOUT)
 DATABASE = sqlite3.connect(DATABASE_NAME)
 
 # Ensure tables exist
 DATABASE.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, channel_id INTEGER, author_id INTEGER, content TEXT, timestamp TEXT)")
 
+# Misc setup
+if not CHANNEL_CULLING_ENABLE:
+    CHANNEL_CULLING_RANGE = 0
 
 # Notepad
 # TODO: make better configs (some yaml or something like that)
 # TODO: make the DB add messages in batches instead of 1-by-1 to improve performance
-# TODO: make it automatically recognize "dead channels" and ignore them (toggleable)
 # TODO: Add a config for the amount of messages to gather at once (currently max 50)
+# TODO: remove caching since it's useless because of Channel Culling
 # TODO: Gather old messages as well
 
 sleep(1) # Discord rate limits the program if you start too fast...? (dunno but this about fixes it)
@@ -83,6 +94,13 @@ while True:
         for channel_id in TARGETED_CHANNELS:
             counter += 1
             channels.append(Channel(int(channel_id), f"TARGETED_CHANNEL_{counter}"))
+    if CHANNEL_CULLING_ENABLE and CHANNEL_CULLING_CACHE:
+        counter = 0
+        for channel in channels:
+            if channel.id in INACTIVE_CHANNELS:
+                counter += 1
+                channels.remove(channel)
+        print("[?] Removed " + str(counter) + " inactive channels from list!")
 
     ### Modules here
     if CACHING_ENABLE and not TARGETED_ENABLE:
@@ -113,7 +131,7 @@ while True:
             continue
 
     if GATHER_MESSAGES:
-        message_gather(API, DATABASE, channels, S_SILENT)
+        channels = message_gather(API, DATABASE, channels, S_SILENT, channel_culling=CHANNEL_CULLING_RANGE, cull_cache=CHANNEL_CULLING_CACHE)
 
     if NOTIFS_ENABLE:
         if loop_number % NOTIFS_FREQUENCY == 0 and loop_number != 1:
