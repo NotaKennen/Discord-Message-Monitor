@@ -100,6 +100,7 @@ if CHANNEL_CULLING_ENABLE and CHANNEL_CULLING_CACHE:
             channels.remove(channel)
     print("[?] Removed " + str(counter) + " inactive channels from list!")
 
+print("[*] " + str(len(channels)) + " channels gathered!")
 print("[*] Setup complete!\n")
 
 ### Looping
@@ -153,6 +154,7 @@ while True:
         print(f"[?] Loop {loop_number} complete!")
     if loop_number >= LOOPING_TIMES and LOOPING_TIMES != 0:
         break
+    print()
     sleep(LOOPING_TIMEOUT)
 
 print("PROGRAM QUIT")
