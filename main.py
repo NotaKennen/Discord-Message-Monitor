@@ -5,7 +5,7 @@ from time import time, sleep
 
 ### CONFIG
 # Console                              (Console settings)
-E_SILENT: bool = False               # Wont print errors to the console (there will be many)
+E_SILENT: bool = True                # Wont print errors to the console (there will be many)
 S_SILENT: bool = False               # Wont print status updates to console 
 FRAGILE: bool = False                # Will raise an exception if an error occurs (should only be used for debugging, and even then it's not recommended)
 
@@ -63,6 +63,7 @@ DATABASE.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, c
 # TODO: Add a config for the amount of messages to gather at once (currently max 50)
 # TODO: Gather old messages as well
 
+sleep(1) # Discord rate limits the program if you start too fast...? (dunno but this about fixes it)
 
 ### Looping
 start_time = time()
