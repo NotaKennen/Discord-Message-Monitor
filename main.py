@@ -5,7 +5,7 @@ from time import time, sleep
 
 ### CONFIG
 # Console                              (Console settings)
-E_SILENT: bool = False                # Wont print errors to the console (there will be many)
+E_SILENT: bool = False               # Wont print errors to the console (there will be many)
 S_SILENT: bool = False               # Wont print status updates to console 
 FRAGILE: bool = False                # Will raise an exception if an error occurs (should only be used for debugging, and even then it's not recommended)
 
@@ -35,7 +35,7 @@ NOTIFS_CHANNEL: int = 0              # Channel ID to send updates to
 NOTIFS_FREQUENCY: int = 0            # How often to send updates (loop amount)
 
 # Misc                                 (Misc settings)
-RATE_LIMIT_TIMEOUT: int = 60         # How many seconds to sleep for when hitting the rate-limit (0 for no sleeping, although that might get you stuck in a loop)
+RATE_LIMIT_TIMEOUT: int = 600        # How many seconds to sleep for when hitting the rate-limit (0 for no sleeping, although that might get you stuck in a loop)
 
 ### END CONFIG
 
@@ -57,9 +57,11 @@ DATABASE.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, c
 
 
 # Notepad
+# TODO: make better configs (some yaml or something like that)
 # TODO: make the DB add messages in batches instead of 1-by-1 to improve performance
 # TODO: make it automatically recognize "dead channels" and ignore them (toggleable)
-# TODO: Gather old messages
+# TODO: Add a config for the amount of messages to gather at once (currently max 50)
+# TODO: Gather old messages as well
 
 
 ### Looping
