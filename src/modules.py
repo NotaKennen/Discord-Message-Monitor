@@ -1,7 +1,9 @@
+from logservice import GLOBAL_LOGSERVICE as LOGSRV
 from sqlite3 import Connection, IntegrityError
+from discord_API import dcAPI, Channel
 from datetime import datetime
 from pytz import utc
-from discord_API import dcAPI, Channel
+
 
 def message_gather(API: dcAPI, DATABASE: Connection, channels: list[Channel], silent: bool = False, channel_culling: int = 0, cull_cache: bool = False):
     """Gathers message from all specified channels, returns an updated list of channels if channel_culling is enabled, returns the same list of channels if not."""
@@ -29,22 +31,22 @@ def message_gather(API: dcAPI, DATABASE: Connection, channels: list[Channel], si
                     updated_channels.append(Channel(channel.id, channel.name))
                 else:
                     if not silent:
-                        print("[*] Channel '" + channel.name + "' has been culled (last message was " + str(time_since) + " seconds ago)")
+                        LOGSRV.log("Channel '" + channel.name + "' has been culled (last message was " + str(time_since) + " seconds ago)", "action")
             except ValueError: # FIXME: time_obj sometimes throws ValueError, I don't know why, fix later, something to do with missing milliseconds I think
                 pass
         elif channel_culling != 0: # Channel either has no messages or HTTP403'd (is private)
             if not silent:
-                    print("[*] Channel '" + channel.name + "' has been culled (channel is private or empty)")
+                    LOGSRV.log("Channel '" + channel.name + "' has been culled (channel is private or empty)", "action")
         
         # If cull_cache is enabled, update the cache file
         if cull_cache and channel_culling != 0:
-            with open("inactive_channels.txt", "a") as f:
+            with open("data/inactive_channels.txt", "a") as f:
                 if channel.id not in [c.id for c in updated_channels]:
                     f.write(str(channel.id) + "\n")
 
         # Print status, commit, and continue
         if not silent:
-            print("[?] Channel '" + channel.name + "' done")
+            LOGSRV.log("Channel '" + channel.name + "' done", "status")
         DATABASE.commit()
 
     # Return the updated channel list (or normal list if channel_culling isnt enabled)

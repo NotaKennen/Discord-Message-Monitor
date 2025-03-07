@@ -1,5 +1,7 @@
 import requests # type: ignore
+from logservice import GLOBAL_LOGSERVICE as LOGSRV
 from time import sleep
+
 
 class Message:
     def __init__(self, id: int, author: str, author_id: int, content: str, timestamp: str):
@@ -43,7 +45,7 @@ class dcAPI:
         self.user: User = User(token)
         
         if not self._validate_token(token):
-            print("[!] INVALID TOKEN")
+            LOGSRV.log("INVALID TOKEN", "error")
             if self.fragile:
                 raise Exception("Invalid token input")
             exit(1)
@@ -54,12 +56,12 @@ class dcAPI:
         guilds = requests.get("https://discord.com/api/v9/users/@me/guilds", headers={"Authorization": self.user.token})
         if guilds.status_code == 429:
             if not self.silent:
-                print("[!] Getting rate-limited, sleeping for a while... (get_user_guilds())")
+                LOGSRV.log("Getting rate-limited, sleeping for a while... (get_user_guilds())", "error")
             sleep(self.rate_limit_timeout)
             return self.get_user_guilds()
         if guilds.status_code != 200:
             if not self.silent:
-                print("[!] Failed to get guilds, status code: " + str(guilds.status_code))
+                LOGSRV.log("Failed to get guilds, status code: " + str(guilds.status_code), "error")
             if self.fragile:
                 raise Exception("Failed to get guilds, status code: " + str(guilds.status_code))
             return []
@@ -77,12 +79,12 @@ class dcAPI:
         channels = requests.get(f"https://discord.com/api/v9/guilds/{guild.id}/channels", headers={"Authorization": self.user.token})
         if channels.status_code == 429:
             if not self.silent:
-                print("[!] Getting rate-limited, sleeping for a while... (get_guild_channels())")
+                LOGSRV.log("Getting rate-limited, sleeping for a while... (get_guild_channels())", "error")
             sleep(self.rate_limit_timeout)
             return self.get_guild_channels(guild)
         if channels.status_code != 200:
             if not self.silent:
-                print("[!] Failed to get channels, status code: " + str(channels.status_code))
+                LOGSRV.log("Failed to get channels, status code: " + str(channels.status_code), "error")
             if self.fragile:
                 raise Exception("Failed to get channels, status code: " + str(channels.status_code))
             return []
@@ -104,12 +106,12 @@ class dcAPI:
         messages = requests.get(f"https://discord.com/api/v9/channels/{channel.id}/messages", headers={"Authorization": self.user.token})
         if messages.status_code == 429:
             if not self.silent:
-                print("[!] Getting rate-limited, sleeping for a while... (get_channel_messages())")
+                LOGSRV.log("Getting rate-limited, sleeping for a while... (get_channel_messages())", "error")
             sleep(self.rate_limit_timeout)
             return self.get_channel_messages(channel)
         if messages.status_code != 200:
             if not self.silent:
-                print(f"[!] Failed to get messages from channel '{channel.name}', status code: " + str(messages.status_code))
+                LOGSRV.log(f"Failed to get messages from channel '{channel.name}', status code: " + str(messages.status_code), "error")
             if self.fragile:
                 raise Exception(f"Failed to get messages from channel '{channel.name}', status code: " + str(messages.status_code))
             return []
@@ -123,13 +125,13 @@ class dcAPI:
         ret = requests.post(f"https://discord.com/api/v9/channels/{channel.id}/messages", headers={"Authorization": self.user.token}, json={"content": message})
         if ret.status_code == 429:
             if not self.silent:
-                print("[!] Getting rate-limited, sleeping for a while... (send_message())")
+                LOGSRV.log("[!] Getting rate-limited, sleeping for a while... (send_message())", "error")
             sleep(self.rate_limit_timeout)
             self.send_message(channel, message)
             return
         if ret.status_code != 200:
             if not self.silent:
-                print(f"[!] Failed to send message to channel '{channel.name}', status code: " + str(ret.status_code))
+                LOGSRV.log(f"[!] Failed to send message to channel '{channel.name}', status code: " + str(ret.status_code), "error")
             if self.fragile:
                 raise Exception(f"Failed to send message to channel '{channel.name}', status code: " + str(ret.status_code))
 
@@ -143,5 +145,5 @@ class dcAPI:
         else:
             if self.fragile:
                 raise Exception(f"Token validation got an unknown response (HTTP{test.status_code})")
-            print(f"Token validation got an unknown response (HTTP{test.status_code})")
+            LOGSRV.log(f"Token validation got an unknown response (HTTP{test.status_code})", "error")
             return True
