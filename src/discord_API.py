@@ -24,9 +24,6 @@ class Guild:
 class User:
     def __init__(self, token: str):
         self.token = token
-
-    def _get(self) -> dict[str, str|int]:
-        return {}
     
 class dcAPI:
     """
@@ -45,9 +42,9 @@ class dcAPI:
         self.user: User = User(token)
         
         if not self._validate_token(token):
-            LOGSRV.log("INVALID TOKEN", "error")
+            LOGSRV.log("invalid token, could not authenticate", "error")
             if self.fragile:
-                raise Exception("Invalid token input")
+                raise Exception("invalid token, could not authenticate")
             exit(1)
         
     def get_user_guilds(self) -> list[Guild]:

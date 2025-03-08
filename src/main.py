@@ -69,7 +69,7 @@ DATABASE.execute("CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY, c
 if not CHANNEL_CULLING_ENABLE:
     CHANNEL_CULLING_RANGE = 0 # type: ignore (It should be 0 anyway if it's off, this is here to just make sure it is)
 
-sleep(1) # Discord rate limits the program if you start too fast...? (dunno but this about fixes it)
+sleep(1) # Discord rate limits the program if you start too fast
 
 ### Channel gathering
 channels: list[Channel] = []
@@ -121,4 +121,5 @@ while True:
     LOGSRV.log(f"Loop {loop_number} complete!\n")
     sleep(LOOPING_TIMEOUT)
 
-print("PROGRAM QUIT")
+LOGSRV.log("Program quit!")
+DATABASE.close()

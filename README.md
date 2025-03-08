@@ -1,5 +1,7 @@
 # Discord Message Monitor
-The Discord message monitor is a self-bot tool to automatically gather and store messages in a convenient database. It's purpose is to work as a data-analysis tool so you can analyze any messages sent in any of your servers. It does NOT go through old messages (although that is planned, might still never make it), so it will only actively monitor newer messages, specifically the newest 50 messages will be grabbed on each channel check.
+The Discord message monitor is a self-bot tool to automatically gather and store messages in a convenient database. It's purpose is to work as a data-analysis tool so you can analyze any messages sent in any of your servers. It does NOT go through old messages (although that is planned, might still never make it), so it will only actively monitor newer messages, specifically the newest 50 messages will be grabbed on each channel check. 
+
+As far as I'm aware, it runs on both Linux and Windows, although it was only tested on Windows 11. The only issue that should happen is the text formatting might be a bit broken if used on an unsupported console, but that's just for aesthetics anyway.
 
 ## Usage
 To use the monitor, you can simply run the main.py file. After that, it'll create some necessary files, mainly "token.txt", you should put an account's token here. The account can be anything, preferably a burner account (since there is a non-zero chance the account might get banned), you just need to join to servers you want to monitor with the account.
@@ -7,6 +9,9 @@ To use the monitor, you can simply run the main.py file. After that, it'll creat
 Once you run it for the first time, it'll run the first loop in "culling mode", where it'll check every single channel in every single server, and cache all the inaccessible and dead ones so it doesn't need to check them on later runs. After that, it'll only check channels that have had some message activity in the last week. Most of the things mentioned here are configurable (such as whether or not it should cull dead channels, if you dont want to loop it, if you want to cache dead channels etc etc etc), read the Config section for more information. 
 
 After running it for a while, it'll have gathered a decent amount of messages into an SQLite database. You can then use these however you will. Currently it'll format the database like this: Message ID / User ID / Channel ID / Content / Timestamp (Discord formatted, YYYY-MM-DDTHH:MM:SS.000000+00:00, the T between the Date and Time is a good separator if you want to format it).
+
+## Dependencies
+The program has only two external dependencies, Requests and pytz. They're still listed in requirements.txt, if you dont feel like writing 2 commands. Besides that, it uses only Python's own modules, mainly sqlite3 (for the database), json (for the config file) and Time (for misc time related things, such as caching). 
 
 ## Config
 The program will create a config file when running for the first time, here is an explanation of all the config options:
